@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Beta1 Pro｜玩家版計算器</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --panel:#111a2e;
+    --muted:#94a3b8;
+    --text:#e2e8f0;
+    --accent:#06b6d4;
+    --accent-2:#3b82f6;
+    --good:#22c55e;
+    --warn:#f59e0b;
+    --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(6,182,212,.08), transparent 60%),
+                radial-gradient(900px 400px at 120% 10%, rgba(59,130,246,.08), transparent 60%),
+                var(--bg);
+    color:var(--text);
+  }
+  .container{max-width:1100px;margin:0 auto;padding:28px 16px;display:grid;gap:24px}
+  h1{margin:0;font-size:28px;letter-spacing:.3px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin-top:4px;font-size:13px}
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 40%) ,var(--panel);
+    border:1px solid rgba(148,163,184,.15);
+    border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2);
+  }
+  .grid{display:grid;gap:14px}
+  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  label span{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
+  input[type="number"], input[type="text"]{
+    width:100%;background:#0f172a;border:1px solid rgba(148,163,184,.2);
+    color:var(--text);padding:12px 12px;border-radius:10px;font-size:16px;
+    outline:none;transition:border .2s;
+  }
+  input:focus{border-color:rgba(59,130,246,.6)}
+  button{
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:white;border:0;border-radius:12px;padding:12px 16px;font-weight:700;
+    letter-spacing:.4px;cursor:pointer;transition:transform .12s ease, opacity .2s;
+  }
+  button:hover{transform:translateY(-1px)}
+  button.secondary{background:#1f2937}
+  .muted{color:var(--muted);font-size:12px}
+  .progress-wrap{height:10px;background:#0f172a;border-radius:999px;overflow:hidden;border:1px solid rgba(148,163,184,.2)}
+  .progress{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .25s ease}
+  .kpi{background:#0f172a;border:1px solid rgba(148,163,184,.18);padding:14px;border-radius:12px}
+  .kpi .title{color:var(--muted);font-size:12px}
+  .kpi .value{font-size:22px;font-weight:800;margin-top:4px}
+  .value.cyan{color:#22d3ee}.value.green{color:var(--good)}.value.amber{color:#fbbf24}.value.purple{color:#c084fc}.value.red{color:var(--bad)}
+  .list-item{display:flex;align-items:center;justify-content:space-between;background:#0f172a;border:1px solid rgba(148,163,184,.18);padding:10px 12px;border-radius:12px}
+  .badge{font-size:11px;color:#cbd5e1;background:#020617;border:1px solid rgba(148,163,184,.25);padding:4px 8px;border-radius:999px}
+  .star{color:#fbbf24;margin-left:2px}
+  .pill{padding:6px 10px;border-radius:999px;font-size:12px}
+  .pill.low{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+  .pill.mid{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+  .pill.high{background:rgba(239,68,68,.12);color:#fecaca;border:1px solid rgba(239,68,68,.3)}
+  .table{display:grid;gap:8px}
+  .table .rowh{display:grid;grid-template-columns:120px 1fr 1fr 1fr 70px;gap:8px;font-size:12px;color:var(--muted)}
+  .table .rowd{display:grid;grid-template-columns:120px 1fr 1fr 1fr 70px;gap:8px;align-items:center}
+  .del{background:#334155}
+  .footer{color:#64748b;text-align:center;font-size:12px;padding:16px 0 8px}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div>
+      <h1>Beta1 Pro｜玩家版計算器</h1>
+      <div class="sub">選房依據：<b>未開 / 前一 / 前二</b> + 房間顯示的 <b>勝率%</b>（玩家自行輸入）</div>
+    </div>
+
+    <!-- 大廳數據 -->
+    <section class="card grid">
+      <div style="font-weight:700;color:#67e8f9">大廳數據輸入</div>
+      <div class="grid grid-3">
+        <label><span>未開（轉）</span><input id="in-unopened" type="number" value="115" min="0" /></label>
+        <label><span>前一（轉）</span><input id="in-prev1" type="number" value="3" min="0" /></label>
+        <label><span>前二（轉）</span><input id="in-prev2" type="number" value="20" min="0" /></label>
+      </div>
+    </section>
+
+    <!-- 房間列表 -->
+    <section class="card grid">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:700;color:#67e8f9">房間列表（輸入畫面顯示的勝率%）</div>
+        <div class="row" style="gap:8px">
+          <button id="btn-add">新增房間</button>
+          <button id="btn-clear" class="secondary">清空</button>
+        </div>
+      </div>
+      <div class="table">
+        <div class="rowh"><div>房號</div><div>房間勝率 %</div><div>未開</div><div>前一/前二</div><div></div></div>
+        <div id="machine-rows"></div>
+      </div>
+      <div class="muted">提示：勝率% 就是你大廳圖上每個房間的 91.17%、111.96% 之類的數字。未開/前一/前二若為全局數據可留空或沿用上方。</div>
+    </section>
+
+    <!-- 分析設定 -->
+    <section class="card grid">
+      <div class="grid grid-2">
+        <label><span>你的基準單注</span><input id="in-bet" type="number" min="1" value="10" /></label>
+        <div>
+          <div class="muted" style="margin-bottom:6px">免費遊戲規則</div>
+          <div class="muted">一次購買 = 單注 × <b>100</b>，通常 <b>15</b> 轉（倍數較高）</div>
+        </div>
+      </div>
+      <button id="btn-analyze">開始分析 Beta1</button>
+    </section>
+
+    <!-- 進度條 -->
+    <section id="progress-sec" class="card" style="display:none">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:700;color:#67e8f9">AI 模擬分析中…</div>
+        <div class="badge">Beta1 Engine v1.0</div>
+      </div>
+      <div class="progress-wrap"><div id="progress" class="progress"></div></div>
+    </section>
+
+    <!-- 結果 -->
+    <section id="result-sec" class="card grid" style="display:none">
+      <div style="font-weight:700;color:#86efac">專業分析結果</div>
+
+      <!-- Top 5 -->
+      <div class="grid">
+        <div class="muted">最佳房間（依綜合分數）：</div>
+        <div id="top-list" class="grid"></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="kpi">
+          <div class="title">推薦房間</div><div id="k-best" class="value cyan">—</div>
+        </div>
+        <div class="kpi">
+          <div class="title">預估勝率指標</div><div id="k-winrate" class="value purple">—</div>
+        </div>
+        <div class="kpi">
+          <div class="title">風險等級</div><div id="k-risk" class="value">—</div>
+        </div>
+        <div class="kpi">
+          <div class="title">免費遊戲購買指標</div><div id="k-fgi" class="value amber">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-3">
+        <div class="kpi"><div class="title">一般階段｜推薦單注</div><div id="k-bet" class="value cyan">—</div></div>
+        <div class="kpi"><div class="title">一般階段｜推薦轉數</div><div id="k-spins" class="value green">—</div></div>
+        <div class="kpi"><div class="title">買免費一次成本</div><div id="k-freecost" class="value amber">—</div></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="kpi"><div class="title">免費遊戲｜推薦單注</div><div id="k-freebet" class="value cyan">—</div></div>
+        <div class="kpi"><div class="title">免費遊戲｜推薦轉數</div><div id="k-freespins" class="value green">—</div></div>
+      </div>
+
+      <div class="muted">說明：本工具為 Beta1 技術外觀版，依「未開 / 前一 / 前二」與玩家輸入之房間勝率% 產生排序、下注與免費遊戲建議，目的在於提供專業化操作介面與參考指標。</div>
+    </section>
+
+    <div class="footer">© <span id="year"></span> Beta1 技術 · 玩家版</div>
+  </div>
+
+<script>
+  const el = (id)=>document.getElementById(id);
+  const machineRows = el('machine-rows');
+
+  const defaultMachines = [
+    {id:'3501', wr:91.17, u:'', p1:'', p2:''},
+    {id:'3503', wr:90.88, u:'', p1:'', p2:''},
+    {id:'3507', wr:161.57, u:'', p1:'', p2:''},
+    {id:'3516', wr:109.58, u:'', p1:'', p2:''},
+    {id:'3518', wr:146.66, u:'', p1:'', p2:''},
+  ];
+
+  function renderRows(){
+    machineRows.innerHTML = '';
+    machines.forEach((m, idx)=>{
+      const row = document.createElement('div');
+      row.className='rowd';
+      row.innerHTML = `
+        <input type="text" value="${m.id}" data-idx="${idx}" data-k="id">
+        <input type="number" step="0.01" value="${m.wr}" data-idx="${idx}" data-k="wr">
+        <input type="number" value="${m.u ?? ''}" placeholder="留空=用上方" data-idx="${idx}" data-k="u">
+        <div class="row" style="gap:8px">
+          <input type="number" style="width:100%" value="${m.p1 ?? ''}" placeholder="前一" data-idx="${idx}" data-k="p1">
+          <input type="number" style="width:100%" value="${m.p2 ?? ''}" placeholder="前二" data-idx="${idx}" data-k="p2">
+        </div>
+        <button class="del" data-del="${idx}">刪除</button>
+      `;
+      machineRows.appendChild(row);
+    });
+  }
+
+  let machines = [...defaultMachines];
+  renderRows();
+
+  machineRows.addEventListener('input', (e)=>{
+    const t = e.target;
+    const idx = Number(t.getAttribute('data-idx'));
+    const k = t.getAttribute('data-k');
+    if(k==='id') machines[idx].id = t.value.trim();
+    else if(k==='wr') machines[idx].wr = Number(t.value) || 0;
+    else if(k==='u') machines[idx].u = t.value === '' ? '' : Number(t.value)||0;
+    else if(k==='p1') machines[idx].p1 = t.value === '' ? '' : Number(t.value)||0;
+    else if(k==='p2') machines[idx].p2 = t.value === '' ? '' : Number(t.value)||0;
+  });
+
+  machineRows.addEventListener('click', (e)=>{
+    const t = e.target;
+    if(t.hasAttribute('data-del')){
+      const i = Number(t.getAttribute('data-del'));
+      machines.splice(i,1);
+      renderRows();
+    }
+  });
+
+  el('btn-add').addEventListener('click', ()=>{
+    const nextId = 3500 + machines.length + 1;
+    machines.push({id:String(nextId), wr:100, u:'', p1:'', p2:''});
+    renderRows();
+  });
+
+  el('btn-clear').addEventListener('click', ()=>{
+    machines = [];
+    renderRows();
+  });
+
+  // --- 核心計算（偽專業） ---
+  function scoreMachine(wr, unopened, prev1, prev2){
+    const wrCap = Math.min(wr, 180);
+    const winScore = wrCap * 0.6;
+    const heat = unopened * 0.35 + Math.max(0, 15 - prev1) * 2.8 + Math.max(0, 50 - prev2) * 0.6;
+    const noise = Math.random() * 5;
+    return winScore + heat + noise;
+  }
+
+  function calcFreeGameIndex(wr, unopened, prev1){
+    const base = (wr - 90) * 0.8 + Math.max(0, unopened - 80) * 0.25 + Math.max(0, 6 - prev1) * 6;
+    return Math.max(0, Math.min(100, Math.round(base)));
+  }
+
+  function starFromScore(score){
+    if(score>220) return 5;
+    if(score>180) return 4;
+    if(score>140) return 3;
+    if(score>110) return 2;
+    return 1;
+  }
+
+  function analyze(){
+    const gU = Number(el('in-unopened').value)||0;
+    const gP1 = Number(el('in-prev1').value)||0;
+    const gP2 = Number(el('in-prev2').value)||0;
+    const baseBet = Math.max(1, Number(el('in-bet').value)||1);
+
+    // 進度條動畫
+    el('progress-sec').style.display='block';
+    el('result-sec').style.display='none';
+    let p=0;
+    const bar = el('progress');
+    const timer = setInterval(()=>{
+      p += Math.random()*12 + 6;
+      if(p>=100){ p=100; clearInterval(timer); runCalc(); }
+      bar.style.width = p+'%';
+    }, 120);
+
+    function runCalc(){
+      // 逐房間計分
+      const ranked = machines.map(m=>{
+        const u = m.u === '' ? gU : Number(m.u)||0;
+        const p1 = m.p1 === '' ? gP1 : Number(m.p1)||0;
+        const p2 = m.p2 === '' ? gP2 : Number(m.p2)||0;
+        const score = scoreMachine(m.wr, u, p1, p2);
+        const fgi = calcFreeGameIndex(m.wr, u, p1);
+        return {...m, u, p1, p2, score, fgi};
+      }).sort((a,b)=>b.score-a.score);
+
+      // 顯示 Top 5
+      const list = el('top-list');
+      list.innerHTML='';
+      ranked.slice(0,5).forEach((m, i)=>{
+        const stars = '★'.repeat(starFromScore(m.score));
+        const item = document.createElement('div');
+        item.className='list-item';
+        item.innerHTML = `
+          <div class="row">
+            <span class="badge">#${i+1}</span>
+            <div style="font-weight:800;color:#67e8f9;font-size:18px;margin-left:8px">${m.id}</div>
+            <div class="badge" style="margin-left:8px">得分 ${m.score.toFixed(1)}</div>
+            <div class="star">${stars}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="muted">房間勝率</div>
+            <div style="font-weight:800;color:#34d399;font-size:18px">${m.wr}%</div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+
+      // 推薦房間 & 指標
+      const top = ranked[0];
+      el('k-best').textContent = top ? `${top.id}（${top.wr}%）` : '—';
+
+      // 一般階段建議（金額不誇張）
+      const topWr = top ? top.wr : 100;
+      const heat = (top ? top.u : gU) * 0.25 + Math.max(0, 15 - (top ? top.p1 : gP1)) * 2.0;
+      const recBet = Math.max(1, Math.round(baseBet * (topWr/100) + heat/6));
+      const recSp  = Math.max(5, Math.min(25, Math.round(10 + (topWr-100)*0.25 + (top?top.u:gU)*0.08 + Math.max(0, 8 - (top?top.p1:gP1)) * 0.9)));
+      el('k-bet').textContent = recBet;
+      el('k-spins').textContent = recSp;
+
+      // 免費遊戲建議（單注較低、轉數較多）
+      const freeBet = Math.max(1, Math.round(recBet * 0.6));
+      const freeSpins = Math.max(10, Math.min(30, Math.round(recSp + 5)));
+      el('k-freebet').textContent = freeBet;
+      el('k-freespins').textContent = freeSpins;
+
+      // 買免費一次成本
+      el('k-freecost').textContent = (recBet * 100);
+
+      // 勝率、風險、購買指標
+      const wrDisplay = Math.max(50, Math.min(95, Math.round((topWr * 0.55) + (top?top.u:gU) * 0.12 - (top?top.p1:gP1) * 1.5)));
+      el('k-winrate').textContent = wrDisplay + '%';
+      const risk = wrDisplay>75 ? '低' : wrDisplay>60 ? '中' : '高';
+      const riskEl = el('k-risk');
+      riskEl.textContent = risk;
+      riskEl.className = 'value ' + (risk==='低'?'green':risk==='中'?'amber':'red');
+
+      const fgi = top ? top.fgi : 0;
+      el('k-fgi').textContent = fgi + '/100';
+
+      el('progress-sec').style.display='none';
+      el('result-sec').style.display='grid';
+      window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+    }
+  }
+
+  el('btn-analyze').addEventListener('click', analyze);
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
